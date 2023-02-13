@@ -1,2 +1,2 @@
 # esp32s3_WebServices
-Web service designs for esp32s3 SOCs 
+Web service design for ESP32-S3 SOCs 
