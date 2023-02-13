@@ -20,9 +20,9 @@
 #define ESP32S3_WEBSERVICE_UART_BAUDRATE            (int)115200     /* Serial line baud rate */
 #define ESP32S3_WEBSERVICE_EEPROM_SIZE              (size_t)300     /* Number of bytes to use on the Flash memory */
 #define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_SSID   (int)0          /* Index of SSID on Flash memory */
-#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_PWD    (int)1          /* Index of PWD on Flash memory */
-#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_IPADDR (int)2          /* Index of IPADDR on Flash memory */
-#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW     (int)3          /* Index of GATEWAY on Flash memory */
+#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_PWD    (int)50         /* Index of PWD on Flash memory */
+#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_IPADDR (int)100        /* Index of IPADDR on Flash memory */
+#define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW     (int)150        /* Index of GATEWAY on Flash memory */
 
 /***********************************************/
 /****************** ENUMS **********************/
