@@ -15,15 +15,20 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
-const esp32s3Web_Singleton* webServerSingleObject = webServerSingleObject->getInstance();         /* One object that rules them all! */
 
 /***********************************************/
-/************ FUNCTION DECLARATIONS **************/
+/************* FUNCTION PROTOTYPES *************/
+/***********************************************/
+
+/***********************************************/
+/************ FUNCTION DECLARATIONS ************/
 /***********************************************/
 /* To make it initializable in the first call to getInstance, make it null */
 esp32s3Web_Singleton *esp32s3Web_Singleton::instance = 0;
 
+/***********************************************/
 /* Initialize serial line to print out programmer logs */
+/***********************************************/
 void esp32s3_web_initializeSerialLine(void)
 {
   /* Activate the serial line */
@@ -31,12 +36,14 @@ void esp32s3_web_initializeSerialLine(void)
   Serial.println("Serial line launch successful!");
 }
 
+/***********************************************/
 /* Input:
  *  - sizeOfEEprom : Size of EEROM that user needs to allocate
  * Return: 
  *  - Error status. If allocation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
  *
  * Initialize EEPROM to reserve sizeOfEEprom_number_of_bytes from Flash memory */
+ /***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_InitializeEepromInstance(size_t sizeOfEeprom)
 {
   Serial.println("Initializing EEPROM/Flash unit!");
@@ -48,6 +55,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_InitializeEepromInstance(size_t sizeOfEeprom)
   return ESP32S3_RESULT_OK;
 }
 
+/***********************************************/
 /* Input:
  *  - paramId     : ID of the parameter that is about to get updated
  *  - newParamStr : Value of the parameter that will be updated to
@@ -55,11 +63,13 @@ ESP32S3_RESULT_ENUM esp32s3_Web_InitializeEepromInstance(size_t sizeOfEeprom)
  *  - Error status. In case of paramId mismatch exception, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
  *
  *  Basically, a wrapper for the class member function to get accessed from different modules */
+ /***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_UpdateClientParameters(esp32s3Web_Singleton* pWebObject, ESP32S3_PARAMETER_ID_ENUM paramId, String newParamStr)
 {
   return pWebObject->setClientParameterAttributes(paramId, newParamStr);
 }
- 
+
+/***********************************************/
 /* Input:
  *  - pWebObject : Object of the web server that has a buffer that carries the client parameters to be written into flash memory
  * Return: 
@@ -67,6 +77,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_UpdateClientParameters(esp32s3Web_Singleton* pWe
  *
  *  Write client parameters into specific String location that are defined as macros. These parameters can not be any
  *  random values or structures. They must be the contents of unique web server object. */
+ /***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton* pWebObject)
 {
   /* Error check - Input cannot be null */
@@ -90,26 +101,34 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string couldn't be written into flash memory!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string has been written into flash memory successfully!");
+  
   if(0 == EEPROM.writeString(ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_PWD, pWebObject->getClientParameterAttributes(ESP32S3_PARAMETER_PWD)))
   {
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string couldn't be written into flash memory!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string has been written into flash memory successfully!");
+  
   if(0 == EEPROM.writeString(ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_IPADDR, pWebObject->getClientParameterAttributes(ESP32S3_PARAMETER_IPADDR)))
   {
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string couldn't be written into flash memory!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string has been written into flash memory successfully!");
+  
   if(0 == EEPROM.writeString(ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW, pWebObject->getClientParameterAttributes(ESP32S3_PARAMETER_GATEWAY)))
   {
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string couldn't be written into flash memory!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string has been written into flash memory successfully!");
 
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): All parameters are written into flash memory successfully!");
   return ESP32S3_RESULT_OK;
 }
 
+/***********************************************/
 /* Input:
  *  - pWebObject : Object of the web server that has a buffer that will carry the client parameters stored in the flash memory
  * Return: 
@@ -117,6 +136,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
  *
  *  Read all attributes of ESP32S3_CLIENT_PARAMS_STRUCT from flash memory. If all values can be
  *  retrieved, set those parameters for webServerSingleObject, must be an input. */
+/***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singleton* pWebObject)
 {
   /* It is time to reaed client parameters from flash memory one by one */
@@ -139,25 +159,42 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
     return ESP32S3_RESULT_ERROR;
   }
 
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringSsid: "    + stringSsid);
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringPwd: "     + stringPwd);
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringIpaddr: "  + stringIpaddr);
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringGateway: " + stringGateway);
+
   /* Write read parameters into the client parameters attributes */
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_SSID, stringSsid))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string couldn't be read from flash memory!");
+    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string updated successfully!");
+  
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_PWD, stringPwd))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string couldn't be read from flash memory!");
+    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string updated successfully!");
+  
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_IPADDR, stringIpaddr))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string couldn't be read from flash memory!");
+    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string updated successfully!");
+  
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_GATEWAY, stringGateway))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string couldn't be read from flash memory!");
+    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }  
+  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string updated successfully!");
+}
+
+ESP32S3_RESULT_ENUM esp32s3_Web_InitializeWebServices()
+{
+  /* to be continued */
 }
