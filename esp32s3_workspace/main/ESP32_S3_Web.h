@@ -27,6 +27,8 @@
 #define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_IPADDR (int)100        /* Index of IPADDR on Flash memory in terms of bytes */
 #define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW     (int)150        /* Index of GATEWAY on Flash memory in terms of bytes */
 
+#define ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT     (int)80         /* Port number of the web server */
+
 /***********************************************/
 /****************** ENUMS **********************/
 /***********************************************/
@@ -45,6 +47,15 @@ typedef enum
   ESP32S3_PARAMETER_GATEWAY,
   ESP32S3_TOTAL_NUM_OF_PARAMS
 }ESP32S3_PARAMETER_ID_ENUM;
+
+typedef enum
+{
+  ESP32S3_SET_SSID = 0,
+  ESP32S3_SET_PWD,
+  ESP32S3_SET_IPADDR,
+  ESP32S3_SET_GATEWAY,
+  ESP32S3_TOTAL_NUM_OF_SET
+}ESP32S3_WEB_REQUEST_TYPE_ENUM;
 
 /* Client parameters - max length of the strings can be ESP32S3_WEBSERVICE_EEPROM_SIZE */
 typedef struct
@@ -233,6 +244,7 @@ class esp32s3Web_Singleton {
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
+const String esp32s3_webService_WirelessServerName = "ESP32S3-WIFI-AP";
 
 /***********************************************/
 /************ FUNCTION PROTOTYPES **************/
@@ -244,6 +256,6 @@ ESP32S3_RESULT_ENUM esp32s3_Web_InitializeEepromInstance(size_t sizeOfEeprom);
 ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton* pWebObject);
 ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singleton* pWebObject);
 /* Wireless networking function prototypes */
-ESP32S3_RESULT_ENUM esp32s3_Web_InitializeWebServices();
+ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService();
 
 #endif

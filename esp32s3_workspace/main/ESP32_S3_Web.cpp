@@ -15,6 +15,7 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
+static AsyncWebServer asyncServerObject(ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT);
 
 /***********************************************/
 /************* FUNCTION PROTOTYPES *************/
@@ -194,7 +195,26 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string updated successfully!");
 }
 
-ESP32S3_RESULT_ENUM esp32s3_Web_InitializeWebServices()
+/***********************************************/
+/* Input:
+ *  - void
+ * Return: 
+ *  - Error status. If AP operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
+ *
+ *  Only get called when local network parameters (client parameters) are null. AP serves a welcome page 
+ *  and an input page to the user so that user can type and submit LAN parameters */
+/***********************************************/
+ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 {
-  /* to be continued */
+  Serial.println("Setting AP (Access Point)");
+  /* Set AP name and null password */
+  WiFi.softAP(esp32s3_webService_WirelessServerName, NULL);
+
+  /* TODO : Remove after test starts */
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP); 
+  /* TODO : Remove after test ends  */
+
+  /* to be continued. reference document lines : 265 - 315*/
 }
