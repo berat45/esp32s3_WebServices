@@ -15,7 +15,7 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
-static AsyncWebServer asyncServerObject(ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT);
+static WiFiServer wifiServerObject(ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT);
 
 /***********************************************/
 /************* FUNCTION PROTOTYPES *************/
@@ -202,19 +202,42 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
  *  - Error status. If AP operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
  *
  *  Only get called when local network parameters (client parameters) are null. AP serves a welcome page 
- *  and an input page to the user so that user can type and submit LAN parameters */
+ *  and an input page to the user so that user can type and submit LAN parameters.
+ *  
+ *  Note: This service is only for one client at a time and works in blocking manner */
 /***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 {
+  WiFiClient wifiRemoteClient;
+  
   Serial.println("Setting AP (Access Point)");
   /* Set AP name and null password */
   WiFi.softAP(esp32s3_webService_WirelessServerName, NULL);
 
-  /* TODO : Remove after test starts */
   IPAddress IP = WiFi.softAPIP();
+   /* TODO : Remove after test starts */
   Serial.print("AP IP address: ");
   Serial.println(IP); 
   /* TODO : Remove after test ends  */
+
+  /* Listen for incoming connections, non-blocking operation 
+   * 
+   * Release note: Unless delay is not applied, operation fails.
+   * For more, library shall be investigated! */
+  while(true)
+  {
+    wifiRemoteClient = wifiServerObject.available(); 
+    delay(ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY);
+    if (wifiRemoteClient)
+    {
+      break;
+    }
+  }
+  
+  /* Provide AP services for the remote client */
+  Keep going on implementation, folder:delete - WifiAccessPoint, line 62
+
+  
 
   /* to be continued. reference document lines : 265 - 315*/
 }

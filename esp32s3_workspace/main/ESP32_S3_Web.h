@@ -14,6 +14,8 @@
 /***********************************************/
 #include "EEPROM.h"
 #include <WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiAP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 
@@ -28,6 +30,7 @@
 #define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW     (int)150        /* Index of GATEWAY on Flash memory in terms of bytes */
 
 #define ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT     (int)80         /* Port number of the web server */
+#define ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY        (int)1000       /* Access point mode server listering delay time */
 
 /***********************************************/
 /****************** ENUMS **********************/
