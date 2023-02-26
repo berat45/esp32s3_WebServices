@@ -209,6 +209,9 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 {
   WiFiClient wifiRemoteClient;
+  String uriMessage = "";             /* Holds incoming URI message */
+  String currentLine = "";            /* Holds incoming header info (except URI message) */
+  char clientMsgInBytes;
   
   Serial.println("Setting AP (Access Point)");
   /* Set AP name and null password */
@@ -223,7 +226,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
   /* Listen for incoming connections, non-blocking operation 
    * 
    * Release note: Unless delay is not applied, operation fails.
-   * For more, library shall be investigated! */
+   * For more, library shall be investigated and updated if possible! */
   while(true)
   {
     wifiRemoteClient = wifiServerObject.available(); 
@@ -235,9 +238,55 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
   }
   
   /* Provide AP services for the remote client */
-  Keep going on implementation, folder:delete - WifiAccessPoint, line 62
-
-  
-
-  /* to be continued. reference document lines : 265 - 315*/
+  while(wifiRemoteClient.connected)
+  {
+    /* If there is a new message to read, read it in bytes */
+    if(wifiRemoteClient.available())
+    {
+      clientMsgInBytes = wifiRemoteClient.read();
+      uriMessage += clientMsgInBytes;
+      /* We need to determine whether URI is completed by checking the value of the last client message.
+       * If it is a new line command, two newline characters in a row means that's the end of the client 
+       * HTTP request and request for the response */
+      if(clientMsgInBytes == ESP32_S3_HTML_DEFINITIONS_NEWLINE)
+      {
+        if(currentLine.length() == 0)
+        {
+          wifiRemoteClient.println(responseMessageHeaderData);
+          /* If incoming URI message contains ssid keyword, it means that this is the second
+           * phase of the interface so
+           * 1. Parse incoming message and get ssid, password, ip_address and gateway data 
+           * 2. Return bye bye web page */
+          if(uriMessage.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID) >= 0)
+          {
+            
+            PARSE VE CLASS ATTRIBUTE'LARINI GUNCELLE ISLEMI BURADA YAPILACAK. BURADA KALDIM. ONCESINDE TEST KODU YAZILABILIR.
+            
+            wifiRemoteClient.println(responseMessageFarewellData);
+          }
+          /* If incoming URI message doesn't contain any ssid keyword, it means that it is the first time
+           * web page request comes so
+           * 1. Send the actual web page so that user can bring in network entries */
+          else
+          {
+            wifiRemoteClient.println(responseMessagePayloadData);
+          }
+          // The HTTP response ends with another blank line
+          wifiRemoteClient.println();
+          // Break out of the while loop
+          break;
+        }
+      }
+    }
+    else
+    {
+      /* Pass */
+    }
+  }
+  // Clear the header variable
+  header = "";
+  // Close the connection
+  wifiRemoteClient.stop();
+  Serial.println("Client disconnected.");
+  Serial.println("");
 }

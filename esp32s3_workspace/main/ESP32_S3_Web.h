@@ -261,4 +261,4 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
 /* Wireless networking function prototypes */
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService();
 
-#endif
+#endif /* ESP32S3_WEB_H */
