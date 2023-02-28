@@ -92,6 +92,14 @@ void setup()
 
   /* Read client parameters from Flash memory */
   esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject);
+
+  Serial.println(" --- ");
+  Serial.println("Access point test is starting..!");
+  Serial.println(" --- ");
+  esp32s3_Web_AccessPointService();
+  Serial.println(" --- ");
+  Serial.println("Access point test is terminating..!");
+  Serial.println(" --- ");
  
 }
 
