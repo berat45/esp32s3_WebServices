@@ -1,4 +1,3 @@
-#pragma once
 /***********************************************/
 /****************** ABOUT **********************/
 /***********************************************/
@@ -16,6 +15,8 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
+esp32s3Web_Singleton* webServerSingleObject = webServerSingleObject->getInstance();         /* One object that rules them all! */
+
 static WiFiServer wifiServerObject(ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT);
 const char* esp32s3_webService_WirelessServerName     = "ESP32S3-WIFI-AP";
 const char* esp32s3_webService_WirelessServerPassword = "123456789";
@@ -195,7 +196,86 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }  
+  
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string updated successfully!");
+  return ESP32S3_RESULT_OK;
+}
+
+/***********************************************/
+/* Input:
+ *  - *uriMsg : Address of the URI string
+ * Return: 
+ *  - If parse operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
+ *
+ *  Expected URI pattern is: ssid=X&pwd=Y&ipaddr=Z&gateway=K*/
+ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg)
+{
+  unsigned int iSsid;
+  unsigned int iPwd;
+  unsigned int iIpaddr;
+  unsigned int iGateway;
+  unsigned int iEnd;
+  String tempoString;
+  
+  /* Find the index values of the network parameters */
+  iSsid    = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID);
+  iPwd     = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_PWD);
+  iIpaddr  = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_IPADDR);
+  iGateway = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_GATEWAY);
+  iEnd     = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_END);
+  
+  /* First we need to check whether the incoming message contains correct entries */
+  if((uriMsg.length() == 0) || (iSsid < 0) || (iPwd < 0) || (iIpaddr < 0) || (iGateway < 0))
+  {
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Step 1 - Parse for SSID, get rValue and update class SSID attribute */
+  tempoString = uriMsg.substring(iSsid+5, iPwd-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): SSID tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_SSID, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): SSID parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 2 - Parse for PWD, get rValue and update class PWD attribute */
+  tempoString = uriMsg.substring(iPwd+4, iIpaddr-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): PWD tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_PWD, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): PWD parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 3 - Parse for IPADDR, get rValue and update class IPADDR attribute */
+  tempoString = uriMsg.substring(iIpaddr+7, iGateway-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): IPADDR tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_IPADDR, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): IPADDR parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 4 - Parse for GATEWAY, get rValue and update class GATEWAY attribute */
+  tempoString = uriMsg.substring(iGateway+8, iEnd);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): GATEWAY tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_GATEWAY, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): GATEWAY parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  return ESP32S3_RESULT_OK;
 }
 
 /***********************************************/
@@ -211,6 +291,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
 /***********************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 {
+  ESP32S3_RESULT_ENUM apModeActive = ESP32S3_RESULT_OK;
   WiFiClient wifiRemoteClient;
   String uriMessage = "";             /* Holds incoming URI message */
   String currentLine = "";            /* Holds incoming header info (except URI message) */
@@ -231,9 +312,8 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
    * Release note: Unless delay is not applied, operation fails.
    * For more, library shall be investigated and updated if possible! */
    wifiServerObject.begin();
-  while(1)
+  while(apModeActive == ESP32S3_RESULT_OK)
   {
-    
     while(true)
     {
       wifiRemoteClient = wifiServerObject.available(); 
@@ -273,8 +353,12 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
             * 2. Return bye bye web page */
             if(uriMessage.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID) >= 0)
             {
-            
-              /* PARSE VE CLASS ATTRIBUTE'LARINI GUNCELLE ISLEMI BURADA YAPILACAK. BURADA KALDIM. ONCESINDE TEST KODU YAZILABILIR. */
+
+              /* Parse and set class attributes */
+              esp32s3_Web_ParseNetworkParameters(uriMessage);
+              /* Time to break the loop */
+              apModeActive = ESP32S3_RESULT_ERROR;
+              
               Serial.println("Debug point 5!");
               wifiRemoteClient.println(responseMessageFarewellData_segment1);
               wifiRemoteClient.println(responseMessageFarewellData_segment2);

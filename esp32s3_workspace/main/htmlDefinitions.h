@@ -1,7 +1,4 @@
 #pragma once
-#ifndef ESP32S3_HTML_DEFINITIONS_H
-#define ESP32S3_HTML_DEFINITIONS_H
-
 /***********************************************/
 /****************** ABOUT **********************/
 /***********************************************/
@@ -19,8 +16,12 @@
 /***********************************************/
 /***************** DEFINES *********************/
 /***********************************************/
-#define ESP32_S3_HTML_DEFINITIONS_NEWLINE    '\n'
-#define ESP32_S3_HTML_DEFINITIONS_TAG_SSID   "ssid"
+#define ESP32_S3_HTML_DEFINITIONS_NEWLINE     '\n'
+#define ESP32_S3_HTML_DEFINITIONS_TAG_SSID    "ssid"
+#define ESP32_S3_HTML_DEFINITIONS_TAG_PWD     "pwd"
+#define ESP32_S3_HTML_DEFINITIONS_TAG_IPADDR  "ipaddr"
+#define ESP32_S3_HTML_DEFINITIONS_TAG_GATEWAY "gateway"
+#define ESP32_S3_HTML_DEFINITIONS_TAG_END     "END"
 
 /***********************************************/
 /**************** VARIABLES ********************/
@@ -72,17 +73,18 @@ char responseMessagePayloadData_segment8[]  =     "<div>"
 char responseMessagePayloadData_segment9[]  =     "<label for=\"Gateway\">Gateway</label>"
                                                   "<input type=\"text\" name=\"gateway\" id=\"id_gateway\" placeholder=\"Please type Gateway Address\" />"
                                                   "</div>"
-                                                  "<input type=\"button\" value=\"push\" onclick=\"webFormCallback();\" />"
+                                                  "<input type=\"button\" value=\"Send\" onclick=\"webFormCallback();\" />"
                                                   "</form>"
                                                   "</body>"
                                                   "<script>"
                                                   // Be sure that each field has been filled in correctly
-                                                  "function webFormCallback() "
+                                                  "function webFormCallback()"
                                                   "{";
 char responseMessagePayloadData_segment10[] =     "if((document.getElementById('id_ssid').value != \"\") && (document.getElementById('id_pwd').value != \"\") &&"
                                                   "(document.getElementById('id_ipaddr').value != \"\") && (document.getElementById('id_gateway').value != \"\"))"
                                                   "{"
-                                                  "document.getElementById('webForm').submit()"
+                                                  "document.getElementById('id_gateway').value += \"END\";"
+                                                  "document.getElementById('webForm').submit();"
                                                   "}"
                                                   "else"
                                                   "{"
@@ -133,7 +135,3 @@ char responseMessageFarewellData_segment6[] =   "}"
                                                  "}"
                                                  "</script>"
                                                  "</html>";
-
-
-
-#endif /* ESP32S3_HTML_DEFINITIONS_H */
