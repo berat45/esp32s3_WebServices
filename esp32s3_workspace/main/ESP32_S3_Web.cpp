@@ -1,4 +1,3 @@
-#pragma once
 /***********************************************/
 /****************** ABOUT **********************/
 /***********************************************/
@@ -11,11 +10,16 @@
 /***************** INCLUDE *********************/
 /***********************************************/
 #include "ESP32_S3_Web.h"
+#include "htmlDefinitions.h"
 
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
+esp32s3Web_Singleton* webServerSingleObject = webServerSingleObject->getInstance();         /* One object that rules them all! */
+
 static WiFiServer wifiServerObject(ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT);
+const char* esp32s3_webService_WirelessServerName     = "ESP32S3-WIFI-AP";
+const char* esp32s3_webService_WirelessServerPassword = "123456789";
 
 /***********************************************/
 /************* FUNCTION PROTOTYPES *************/
@@ -192,10 +196,89 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }  
+  
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string updated successfully!");
+  return ESP32S3_RESULT_OK;
 }
 
 /***********************************************/
+/* Input:
+ *  - *uriMsg : Address of the URI string
+ * Return: 
+ *  - If parse operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
+ *
+ *  Expected URI pattern is: ssid=X&pwd=Y&ipaddr=Z&gateway=K*/
+ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg)
+{
+  unsigned int iSsid;
+  unsigned int iPwd;
+  unsigned int iIpaddr;
+  unsigned int iGateway;
+  unsigned int iEnd;
+  String tempoString;
+  
+  /* Find the index values of the network parameters */
+  iSsid    = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID);
+  iPwd     = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_PWD);
+  iIpaddr  = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_IPADDR);
+  iGateway = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_GATEWAY);
+  iEnd     = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_END);
+  
+  /* First we need to check whether the incoming message contains correct entries */
+  if((uriMsg.length() == 0) || (iSsid < 0) || (iPwd < 0) || (iIpaddr < 0) || (iGateway < 0))
+  {
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Step 1 - Parse for SSID, get rValue and update class SSID attribute */
+  tempoString = uriMsg.substring(iSsid+5, iPwd-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): SSID tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_SSID, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): SSID parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 2 - Parse for PWD, get rValue and update class PWD attribute */
+  tempoString = uriMsg.substring(iPwd+4, iIpaddr-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): PWD tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_PWD, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): PWD parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 3 - Parse for IPADDR, get rValue and update class IPADDR attribute */
+  tempoString = uriMsg.substring(iIpaddr+7, iGateway-1);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): IPADDR tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_IPADDR, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): IPADDR parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  /* Flush temporary string */
+  tempoString = "";
+
+  /* Step 4 - Parse for GATEWAY, get rValue and update class GATEWAY attribute */
+  tempoString = uriMsg.substring(iGateway+8, iEnd);
+  Serial.println("esp32s3_Web_ParseNetworkParameters(): GATEWAY tempostring: " + tempoString);
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_GATEWAY, tempoString))
+  {
+    Serial.println("esp32s3_Web_ParseNetworkParameters(): GATEWAY parameter write error!");
+    return ESP32S3_RESULT_ERROR;
+  }
+
+  return ESP32S3_RESULT_OK;
+}
+
+/******************************************************************************************************/
 /* Input:
  *  - void
  * Return: 
@@ -205,9 +288,10 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
  *  and an input page to the user so that user can type and submit LAN parameters.
  *  
  *  Note: This service is only for one client at a time and works in blocking manner */
-/***********************************************/
+/******************************************************************************************************/
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 {
+  ESP32S3_RESULT_ENUM apModeActive = ESP32S3_RESULT_OK;
   WiFiClient wifiRemoteClient;
   String uriMessage = "";             /* Holds incoming URI message */
   String currentLine = "";            /* Holds incoming header info (except URI message) */
@@ -215,7 +299,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
   
   Serial.println("Setting AP (Access Point)");
   /* Set AP name and null password */
-  WiFi.softAP(esp32s3_webService_WirelessServerName, NULL);
+  WiFi.softAP(esp32s3_webService_WirelessServerName, esp32s3_webService_WirelessServerPassword);
 
   IPAddress IP = WiFi.softAPIP();
    /* TODO : Remove after test starts */
@@ -227,66 +311,169 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
    * 
    * Release note: Unless delay is not applied, operation fails.
    * For more, library shall be investigated and updated if possible! */
-  while(true)
+  wifiServerObject.begin();
+  while(apModeActive == ESP32S3_RESULT_OK)
   {
-    wifiRemoteClient = wifiServerObject.available(); 
-    delay(ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY);
-    if (wifiRemoteClient)
+    while(true)
     {
-      break;
-    }
-  }
-  
-  /* Provide AP services for the remote client */
-  while(wifiRemoteClient.connected)
-  {
-    /* If there is a new message to read, read it in bytes */
-    if(wifiRemoteClient.available())
-    {
-      clientMsgInBytes = wifiRemoteClient.read();
-      uriMessage += clientMsgInBytes;
-      /* We need to determine whether URI is completed by checking the value of the last client message.
-       * If it is a new line command, two newline characters in a row means that's the end of the client 
-       * HTTP request and request for the response */
-      if(clientMsgInBytes == ESP32_S3_HTML_DEFINITIONS_NEWLINE)
+      wifiRemoteClient = wifiServerObject.available(); 
+      if (wifiRemoteClient)
       {
-        if(currentLine.length() == 0)
+        break;
+      }
+      delay(ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY);
+    }
+  Serial.println("Connection established..!");
+
+    /* Provide AP services for the remote client */
+    while(wifiRemoteClient.connected())
+    {
+      /* If there is a new message to read, read it in bytes */
+      if(wifiRemoteClient.available())
+      {
+        clientMsgInBytes = wifiRemoteClient.read();
+        uriMessage += clientMsgInBytes;
+      
+        /* We need to determine whether URI is completed by checking the value of the last client message.
+        * If it is a new line command, two newline characters in a row means that's the end of the client 
+        * HTTP request and request for the response */
+        if(clientMsgInBytes == ESP32_S3_HTML_DEFINITIONS_NEWLINE)
         {
-          wifiRemoteClient.println(responseMessageHeaderData);
-          /* If incoming URI message contains ssid keyword, it means that this is the second
-           * phase of the interface so
-           * 1. Parse incoming message and get ssid, password, ip_address and gateway data 
-           * 2. Return bye bye web page */
-          if(uriMessage.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID) >= 0)
+          if(currentLine.length() == 0)
           {
-            
-            PARSE VE CLASS ATTRIBUTE'LARINI GUNCELLE ISLEMI BURADA YAPILACAK. BURADA KALDIM. ONCESINDE TEST KODU YAZILABILIR.
-            
-            wifiRemoteClient.println(responseMessageFarewellData);
+            wifiRemoteClient.println(responseMessageHeaderData);
+            /* If incoming URI message contains ssid keyword, it means that this is the second
+            * phase of the interface so
+            * 1. Parse incoming message and get ssid, password, ip_address and gateway data 
+            * 2. Return bye bye web page */
+            if(uriMessage.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID) >= 0)
+            {
+
+              /* Parse and set class attributes */
+              esp32s3_Web_ParseNetworkParameters(uriMessage);
+              /* Time to break the loop */
+              apModeActive = ESP32S3_RESULT_ERROR;
+              
+              wifiRemoteClient.println(responseMessageFarewellData_segment1);
+              wifiRemoteClient.println(responseMessageFarewellData_segment2);
+              wifiRemoteClient.println(responseMessageFarewellData_segment3);
+              wifiRemoteClient.println(responseMessageFarewellData_segment4);
+              wifiRemoteClient.println(responseMessageFarewellData_segment5);
+              wifiRemoteClient.println(responseMessageFarewellData_segment6);
+            }
+            /* If incoming URI message doesn't contain any ssid keyword, it means that it is the first time
+            * web page request comes so
+            * 1. Send the actual web page so that user can bring in network entries */
+            else
+            {
+              wifiRemoteClient.println(responseMessagePayloadData_segment1);
+              wifiRemoteClient.println(responseMessagePayloadData_segment2);
+              wifiRemoteClient.println(responseMessagePayloadData_segment3);
+              wifiRemoteClient.println(responseMessagePayloadData_segment4);
+              wifiRemoteClient.println(responseMessagePayloadData_segment5);
+              wifiRemoteClient.println(responseMessagePayloadData_segment6);
+              wifiRemoteClient.println(responseMessagePayloadData_segment7);
+              wifiRemoteClient.println(responseMessagePayloadData_segment8);
+              wifiRemoteClient.println(responseMessagePayloadData_segment9);
+              wifiRemoteClient.println(responseMessagePayloadData_segment10);
+            }
+          
+            // The HTTP response ends with another blank line
+            wifiRemoteClient.println();
+            // Break out of the while loop
+            break;
           }
-          /* If incoming URI message doesn't contain any ssid keyword, it means that it is the first time
-           * web page request comes so
-           * 1. Send the actual web page so that user can bring in network entries */
-          else
-          {
-            wifiRemoteClient.println(responseMessagePayloadData);
-          }
-          // The HTTP response ends with another blank line
-          wifiRemoteClient.println();
-          // Break out of the while loop
-          break;
         }
       }
+      else
+      {
+        /* Pass */
+      }
     }
-    else
-    {
-      /* Pass */
-    }
+    // Clear the header variable
+    clientMsgInBytes = ' ';
+    // Close the connection
+    wifiRemoteClient.stop();
+    Serial.println("Client disconnected.");
+    Serial.println("");
+    delay(10000);
   }
-  // Clear the header variable
-  header = "";
-  // Close the connection
-  wifiRemoteClient.stop();
-  Serial.println("Client disconnected.");
+  
+  return ESP32S3_RESULT_OK;
+}
+
+/****************************************************************************************************************/
+/* Input:
+ *  - void
+ * Return: 
+ *  - Error status. If station mode operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
+ *
+ *  Processor shall enter this state after AP mode. Client LAN parameters must have gotten correctly to proceed. */
+/****************************************************************************************************************/
+ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
+{
+  WebServer server(80);
+  String local_WifiName = "";
+  String local_WifiPwd  = "";
+  
+  /* Read LAN parameters */
+  local_WifiName = webServerSingleObject->getClientParameterAttributes(ESP32S3_PARAMETER_SSID);
+  local_WifiPwd  = webServerSingleObject->getClientParameterAttributes(ESP32S3_PARAMETER_PWD);
+
+  local_WifiName = "BS Ziggo";     /* DEBUG: DELETE */
+  local_WifiPwd  = "Besa4546.qXa"; /* DEBUG: DELETE */
+  
+  /* Check null parameters */
+  if((local_WifiName.length() == 0) || (local_WifiPwd.length() == 0))
+  {
+    Serial.println("esp32s3_Web_StationModeService(): Unknown/Empty LAN parameters..!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  
+  /* Set Wi-Fi mode to WIFI Station Mode */
+  WiFi.mode(WIFI_STA);
+
+  /* First configuration phase */
+  WiFi.begin(local_WifiName.c_str(), local_WifiPwd.c_str());
+  /* Wait for the connection */
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(700);
+    Serial.print(".");
+  }
+
+/* DEBUG: DELETE */
   Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(local_WifiName);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+/* DEBUG: DELETE */
+
+  /* mDNS is a multicast UDP service that is used to provide local network service and host discovery. 
+   * Provides low level (layer 2) network awareness */
+  if (MDNS.begin("esp32")) {
+    Serial.println("esp32s3_Web_StationModeService(): MDNS responder started");
+  }
+
+  /* TODO */
+  /* Request type: Unknown request: When the web page does not reside on this server, handler should be run.!*/
+  /* server.onNotFound(handleNotFound);*/
+
+  /* Callback set  
+   * Request type: Main page */
+  server.on("/", [&]() {
+      server.send(200, "text/html", activeMode_reponseMessage_payload_segment1);
+    });
+
+  Continue from here.. Keep going on AdvancedWebServer example
+  
+  Serial.println("HTTP server started");
+  server.begin();
+
+  while(1)
+  {
+    server.handleClient();
+    delay(10);
+  }
+  
 }

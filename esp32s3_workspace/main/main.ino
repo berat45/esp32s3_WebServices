@@ -19,8 +19,6 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
-esp32s3Web_Singleton* webServerSingleObject = webServerSingleObject->getInstance();         /* One object that rules them all! */
-
 String ssidDummyString     = "";
 String pwdDummyString      = "";
 String ipAddrDummyString   = "";
@@ -71,6 +69,7 @@ void setup()
     return;
   }
 
+#if 0
   ssidDummyString     = "1testDummyStringSSID";
   pwdDummyString      = "2testDummyStringPWD";
   ipAddrDummyString   = "3testDummyStringIPADDR";
@@ -92,6 +91,21 @@ void setup()
 
   /* Read client parameters from Flash memory */
   esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject);
+#endif /*#if 0*/
+
+#if 0
+  Serial.println(" --- ");
+  Serial.println("Access point test is starting..!");
+  Serial.println(" --- ");
+  esp32s3_Web_AccessPointService();
+  esp32s3_Web_WriteClientParamsIntoFlash(webServerSingleObject);
+  esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject);
+  Serial.println(" --- ");
+  Serial.println("Access point test is terminating..!");
+  Serial.println(" --- ");
+#endif
+
+  esp32s3_Web_StationModeService();
  
 }
 

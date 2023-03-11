@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once*/
 #ifndef ESP32S3_WEB_H
 #define ESP32S3_WEB_H
 /***********************************************/
@@ -15,6 +15,8 @@
 #include "EEPROM.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
 #include <WiFiAP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
@@ -247,7 +249,7 @@ class esp32s3Web_Singleton {
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
-const String esp32s3_webService_WirelessServerName = "ESP32S3-WIFI-AP";
+extern esp32s3Web_Singleton* webServerSingleObject;
 
 /***********************************************/
 /************ FUNCTION PROTOTYPES **************/
@@ -260,5 +262,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
 ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singleton* pWebObject);
 /* Wireless networking function prototypes */
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService();
+ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService();
+ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg);
 
 #endif /* ESP32S3_WEB_H */
