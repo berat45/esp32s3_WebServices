@@ -32,7 +32,7 @@
 #define ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_GW     (int)150        /* Index of GATEWAY on Flash memory in terms of bytes */
 
 #define ESP32S3_WEBSERVICE_WIRELESS_SERVER_PORT     (int)80         /* Port number of the web server */
-#define ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY        (int)1000       /* Access point mode server listering delay time */
+#define ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY        (int)100        /* Access point mode server listering delay time */
 
 /***********************************************/
 /****************** ENUMS **********************/
@@ -61,6 +61,17 @@ typedef enum
   ESP32S3_SET_GATEWAY,
   ESP32S3_TOTAL_NUM_OF_SET
 }ESP32S3_WEB_REQUEST_TYPE_ENUM;
+
+typedef enum
+{
+  ESP32S3_STATE_STARTUP = 0,
+  ESP32S3_STATE_CONTROL_CONFIG_PARAMS,
+  ESP32S3_STATE_AP,
+  ESP32S3_STATE_STATION_MODE,
+  ESP32S3_STATE_ACTIVE,
+  ESP32S3_STATE_OFF,
+  ESP32S3_TOTAL_NUM_OF_STATES
+}ESP32S3_WEB_FSM_STATE_ENUM;
 
 /* Client parameters - max length of the strings can be ESP32S3_WEBSERVICE_EEPROM_SIZE */
 typedef struct
@@ -260,9 +271,13 @@ ESP32S3_RESULT_ENUM esp32s3_Web_UpdateClientParameters(esp32s3Web_Singleton* pWe
 ESP32S3_RESULT_ENUM esp32s3_Web_InitializeEepromInstance(size_t sizeOfEeprom);
 ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton* pWebObject);
 ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singleton* pWebObject);
+ESP32S3_RESULT_ENUM esp32s3_Web_FlushClientParamsOnFlash(esp32s3Web_Singleton* pWebObject);
 /* Wireless networking function prototypes */
 ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService();
 ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService();
 ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg);
+/* Web server main loop  */
+ESP32S3_RESULT_ENUM esp32s3_Web_FSM();
+
 
 #endif /* ESP32S3_WEB_H */

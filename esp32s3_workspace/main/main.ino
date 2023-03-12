@@ -19,37 +19,10 @@
 /***********************************************/
 /***************** VARIABLES *******************/
 /***********************************************/
-String ssidDummyString     = "";
-String pwdDummyString      = "";
-String ipAddrDummyString   = "";
-String gatewayDummyString  = "";
 
 /***********************************************/
 /*********** FUNCTION DECLARATIONS *************/
 /***********************************************/
-void test_updateClientParameters()
-{
-  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_SSID,    ssidDummyString))
-  {
-    Serial.println("esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_SSID,    ssidDummyString)");
-    return;
-  }
-  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_PWD,     pwdDummyString))
-  {
-    Serial.println("esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_PWD,     pwdDummyString)");
-    return;
-  }
-  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_IPADDR,  ipAddrDummyString))
-  {
-    Serial.println("esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_IPADDR,  ipAddrDummyString)");
-    return;
-  }
-  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_GATEWAY, gatewayDummyString))
-  {
-    Serial.println("esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_GATEWAY, gatewayDummyString)");
-    return;
-  }
-}
 
 /* INPUT:  void 
  * RETURN: void
@@ -58,55 +31,15 @@ void setup()
 {
   /* Take a time for user */
   delay(10000);
-  
-  /* Initialize the serial line */
-  esp32s3_web_initializeSerialLine();
-
-  /* Initialize EEPROM */
-  if(ESP32S3_RESULT_OK != esp32s3_Web_InitializeEepromInstance(ESP32S3_WEBSERVICE_EEPROM_SIZE))
-  {
-    Serial.println("esp32s3_Web_InitializeEepromInstance(ESP32S3_WEBSERVICE_EEPROM_SIZE) failed!");
-    return;
-  }
 
 #if 0
-  ssidDummyString     = "1testDummyStringSSID";
-  pwdDummyString      = "2testDummyStringPWD";
-  ipAddrDummyString   = "3testDummyStringIPADDR";
-  gatewayDummyString  = "4testDummyStringGATEWAY";
-
-  /* Set client parameters with test values */
-  test_updateClientParameters();
-  
-  /* Write updated client parameters into Flash memory */
-  esp32s3_Web_WriteClientParamsIntoFlash(webServerSingleObject);
-
-  ssidDummyString     = "";
-  pwdDummyString      = "";
-  ipAddrDummyString   = "";
-  gatewayDummyString  = "";
-
-  /* Set client parameters with null values */
-  test_updateClientParameters();
-
-  /* Read client parameters from Flash memory */
-  esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject);
-#endif /*#if 0*/
-
-#if 0
-  Serial.println(" --- ");
-  Serial.println("Access point test is starting..!");
-  Serial.println(" --- ");
-  esp32s3_Web_AccessPointService();
-  esp32s3_Web_WriteClientParamsIntoFlash(webServerSingleObject);
-  esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject);
-  Serial.println(" --- ");
-  Serial.println("Access point test is terminating..!");
-  Serial.println(" --- ");
+  callMe();
 #endif
 
-  esp32s3_Web_StationModeService();
- 
+
+
+  esp32s3_Web_FSM();
+
 }
 
 void loop() 

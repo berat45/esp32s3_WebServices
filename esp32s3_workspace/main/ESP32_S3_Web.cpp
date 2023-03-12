@@ -91,7 +91,8 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): Null web object!");
     return ESP32S3_RESULT_ERROR;
   }
-         
+
+  #if 0 /* Obsoleted after flush operation inserted*/
   /* Error check - Input parameters cannot be empty */
   if((pWebObject->getClientParameterLength(ESP32S3_PARAMETER_SSID) == 0)   || (pWebObject->getClientParameterLength(ESP32S3_PARAMETER_PWD) == 0) ||
      (pWebObject->getClientParameterLength(ESP32S3_PARAMETER_IPADDR) == 0) || (pWebObject->getClientParameterLength(ESP32S3_PARAMETER_GATEWAY) == 0))
@@ -99,11 +100,12 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
     Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): Empty string content detected!");
     return ESP32S3_RESULT_ERROR;
   }
+  #endif
 
   /* It is time to write Strings into the flash memory one by one */
   if(0 == EEPROM.writeString(ESP32S3_WEBSERVICE_EEPROM_INDEX_ADDR_SSID, pWebObject->getClientParameterAttributes(ESP32S3_PARAMETER_SSID)))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string couldn't be written into flash memory!");
+    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string (" + pWebObject->getClientParameterAttributes(ESP32S3_PARAMETER_SSID) + ") couldn't be written into flash memory!");
     return ESP32S3_RESULT_ERROR;
   }
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string has been written into flash memory successfully!");
@@ -130,6 +132,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_WriteClientParamsIntoFlash(esp32s3Web_Singleton*
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string has been written into flash memory successfully!");
 
   Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): All parameters are written into flash memory successfully!");
+  EEPROM.commit();
   return ESP32S3_RESULT_OK;
 }
 
@@ -156,6 +159,11 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
     Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): Null web object!");
     return ESP32S3_RESULT_ERROR;
   }
+
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringSsid: "    + stringSsid + " len(stringSsid): " + stringSsid.length());
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringPwd: "     + stringPwd);
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringIpaddr: "  + stringIpaddr);
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringGateway: " + stringGateway);
   
   /* Error check - String null check */
   if((String() == stringSsid) || (String() == stringPwd) || (String() == stringIpaddr) || (String() == stringGateway))
@@ -164,40 +172,82 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
     return ESP32S3_RESULT_ERROR;
   }
 
-  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringSsid: "    + stringSsid);
-  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringPwd: "     + stringPwd);
-  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringIpaddr: "  + stringIpaddr);
-  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): stringGateway: " + stringGateway);
-
-  /* Write read parameters into the client parameters attributes */
-  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_SSID, stringSsid))
+  /* Error check - String flush check */
+  if((String(" ") == stringSsid) || (String(" ") == stringPwd) || (String(" ") == stringIpaddr) || (String(" ") == stringGateway))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string cannot be updated!");
+    Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): EEPROM client parameters are flushed!");
     return ESP32S3_RESULT_ERROR;
   }
-  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): SSID string updated successfully!");
+
+  /* Write read parameters into the client parameter attributes */
+  if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_SSID, stringSsid))
+  {
+    Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): SSID string cannot be updated!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): SSID string updated successfully!");
   
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_PWD, stringPwd))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string cannot be updated!");
+    Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): PWD string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }
-  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): PWD string updated successfully!");
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): PWD string updated successfully!");
   
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_IPADDR, stringIpaddr))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string cannot be updated!");
+    Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): IPADDR string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }
-  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): IPADDR string updated successfully!");
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): IPADDR string updated successfully!");
   
   if(ESP32S3_RESULT_ERROR == esp32s3_Web_UpdateClientParameters(pWebObject, ESP32S3_PARAMETER_GATEWAY, stringGateway))
   {
-    Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string cannot be updated!");
+    Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): GATEWAY string cannot be updated!");
     return ESP32S3_RESULT_ERROR;
   }  
+  Serial.println("esp32s3_Web_ReadClientParamsFromFlashAndSet(): GATEWAY string updated successfully!");
   
-  Serial.println("esp32s3_Web_WriteClientParamsIntoFlash(): GATEWAY string updated successfully!");
+  return ESP32S3_RESULT_OK;
+}
+
+/* Clear all flash regions*/
+ESP32S3_RESULT_ENUM esp32s3_Web_FlushClientParamsOnFlash(esp32s3Web_Singleton* pWebObject)
+{
+  String ssidNullStr     = "";
+  String pwdNullStr      = "";
+  String ipAddrNullStr   = "";
+  String gatewayNullStr  = "";
+  
+  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_SSID, ssidNullStr))
+  {
+    Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): SSID region delete failed!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): SSID region deleted..!");
+  
+  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_PWD, pwdNullStr))
+  {
+    Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): PWD region deleted failed!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): PWD region deleted..!");
+  
+  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_IPADDR, ipAddrNullStr))
+  {
+    Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): IPADDR region deleted failed!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): IPADDR region deleted..!");
+  
+  if(ESP32S3_RESULT_OK != esp32s3_Web_UpdateClientParameters(webServerSingleObject, ESP32S3_PARAMETER_GATEWAY, gatewayNullStr))
+  {
+    Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): GATEWAY region deleted failed!");
+    return ESP32S3_RESULT_ERROR;
+  }
+  Serial.println("esp32s3_Web_FlushClientParamsOnFlash(): GATEWAY region deleted..!");
+
+  esp32s3_Web_WriteClientParamsIntoFlash(webServerSingleObject);
   return ESP32S3_RESULT_OK;
 }
 
@@ -216,6 +266,9 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg)
   unsigned int iGateway;
   unsigned int iEnd;
   String tempoString;
+
+  /* Replace all + symbols with spaces */
+  uriMsg.replace("+", " ");
   
   /* Find the index values of the network parameters */
   iSsid    = uriMsg.indexOf(ESP32_S3_HTML_DEFINITIONS_TAG_SSID);
@@ -275,6 +328,8 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ParseNetworkParameters(String uriMsg)
     return ESP32S3_RESULT_ERROR;
   }
 
+  /* Write all parameters into flash */
+  esp32s3_Web_WriteClientParamsIntoFlash(webServerSingleObject);
   return ESP32S3_RESULT_OK;
 }
 
@@ -413,6 +468,8 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
 ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
 {
   WebServer server(80);
+  uint8_t SmStatusTime = 0;
+  const uint8_t SmStatusTimeout = 15;
   String local_WifiName = "";
   String local_WifiPwd  = "";
   
@@ -420,8 +477,8 @@ ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
   local_WifiName = webServerSingleObject->getClientParameterAttributes(ESP32S3_PARAMETER_SSID);
   local_WifiPwd  = webServerSingleObject->getClientParameterAttributes(ESP32S3_PARAMETER_PWD);
 
-  local_WifiName = "BS Ziggo";     /* DEBUG: DELETE */
-  local_WifiPwd  = "Besa4546.qXa"; /* DEBUG: DELETE */
+  /*local_WifiName = "BS Ziggo";*/     /* DEBUG: DELETE */
+  /*local_WifiPwd  = "Besa4546.qXa";*/ /* DEBUG: DELETE */
   
   /* Check null parameters */
   if((local_WifiName.length() == 0) || (local_WifiPwd.length() == 0))
@@ -438,6 +495,13 @@ ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
   /* Wait for the connection */
   while (WiFi.status() != WL_CONNECTED) {
     delay(700);
+    SmStatusTime++;
+    if(SmStatusTimeout == SmStatusTime)
+    {
+      /* Conenction timeout*/
+       Serial.println("esp32s3_Web_StationModeService(): Connection timeout!");
+       return ESP32S3_RESULT_ERROR;
+    }
     Serial.print(".");
   }
 
@@ -464,8 +528,6 @@ ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
   server.on("/", [&]() {
       server.send(200, "text/html", activeMode_reponseMessage_payload_segment1);
     });
-
-  Continue from here.. Keep going on AdvancedWebServer example
   
   Serial.println("HTTP server started");
   server.begin();
@@ -475,5 +537,156 @@ ESP32S3_RESULT_ENUM esp32s3_Web_StationModeService()
     server.handleClient();
     delay(10);
   }
-  
 }
+
+
+/****************************************************************************************************************/
+/*
+ * ESP32-S3 state machine implementation
+ * 
+ * **********************     
+ * Config File Read State
+ * **********************
+ *        |        
+ *        |
+ *        |   
+ *        V
+ * ******************        ******************
+ * Station Mode State -----> Access Point State
+ * ******************        ******************
+ *        |
+ *        |
+ *        |
+ *        V
+ * ************
+ * Active State
+ * ************
+ * */
+
+ /* Input:
+ *  - void
+ * Return: 
+ *  - Error status. If station mode operation fails, return ESP32S3_RESULT_ERROR, ESP32S3_RESULT_OK otherwise
+ *
+ *  All function calls are handled in here. No wrapper used for interfaces. */
+/****************************************************************************************************************/
+ESP32S3_RESULT_ENUM esp32s3_Web_FSM()
+{
+  ESP32S3_WEB_FSM_STATE_ENUM fsmState;
+  fsmState = ESP32S3_STATE_STARTUP;
+
+  /* Web server shall run until server failure */
+  while(fsmState != ESP32S3_STATE_OFF)
+  {
+    switch(fsmState)
+    {
+      /***********************************************************/
+      /* Do all necessary initializations during the setup phase */
+      /***********************************************************/
+      case ESP32S3_STATE_STARTUP:
+      {
+        /* Initialize the serial line */
+        esp32s3_web_initializeSerialLine();
+
+        /* Initialize EEPROM */
+        if(ESP32S3_RESULT_OK != esp32s3_Web_InitializeEepromInstance(ESP32S3_WEBSERVICE_EEPROM_SIZE))
+        {
+          Serial.println("esp32s3_Web_FSM(): Initialize EEPROM failed!");
+          fsmState = ESP32S3_STATE_OFF;
+        }
+        else
+        {
+          fsmState = ESP32S3_STATE_CONTROL_CONFIG_PARAMS;
+        }
+        Serial.println("esp32s3_Web_FSM(): ESP32S3_STATE_STARTUP success..!");
+        break;
+      }
+
+      /***********************************************************/
+      /* Read and valdiate local area network parameters */
+      /***********************************************************/
+      case ESP32S3_STATE_CONTROL_CONFIG_PARAMS:
+      {
+        /* Read client parameters from Flash memory */
+        if(ESP32S3_RESULT_ERROR == esp32s3_Web_ReadClientParamsFromFlashAndSet(webServerSingleObject))
+        {
+          Serial.println("esp32s3_Web_FSM(): EEPROM parameters cannot be read! Switching to AP mode..!");
+          /* Clear all regions on Flash */
+          esp32s3_Web_FlushClientParamsOnFlash(webServerSingleObject);
+          fsmState = ESP32S3_STATE_AP;
+        }
+        else
+        {
+          Serial.println("esp32s3_Web_FSM(): EEPROM parameters can be read! Switching to Station mode..!");
+          fsmState = ESP32S3_STATE_STATION_MODE;
+        }
+        Serial.println("esp32s3_Web_FSM(): ESP32S3_STATE_CONTROL_CONFIG_PARAMS success..!");
+        break;
+      }
+
+      /***********************************************************/
+      /* Access Point functionality */
+      /***********************************************************/
+      case ESP32S3_STATE_AP:
+      {
+        /* Wait until esp32s3_Web_AccessPointService() operation finishes */
+        if(ESP32S3_RESULT_OK == esp32s3_Web_AccessPointService())
+        {
+          Serial.println("esp32s3_Web_FSM(): Device needs to get restarted!");
+          fsmState = ESP32S3_STATE_OFF;
+        }
+        Serial.println("esp32s3_Web_FSM(): ESP32S3_STATE_AP success..!");
+        break;
+      }
+      
+      case ESP32S3_STATE_STATION_MODE:
+      {
+        Serial.println("esp32s3_Web_FSM(): ESP32S3_STATE_AP success..!");
+        /* Wait until esp32s3_Web_StationModeService() operation fails */
+        #warning "Infinite loop must be avoided!"
+        if(ESP32S3_RESULT_ERROR == esp32s3_Web_StationModeService())
+        {
+          Serial.println("esp32s3_Web_FSM(): Station mode failed!");
+          /* Clear all regions on Flash */
+          esp32s3_Web_FlushClientParamsOnFlash(webServerSingleObject);
+          fsmState = ESP32S3_STATE_OFF;
+        }
+        else
+        {
+          /* TODO */
+        }
+        break;
+      }
+      
+      case ESP32S3_STATE_ACTIVE:
+      {
+        break;
+      }
+      
+      case ESP32S3_STATE_OFF:
+      {
+        /* Pass */
+        break;
+      }
+      
+      default:
+      {
+        Serial.println("esp32s3_Web_FSM(): Unknown FSM state!");
+        fsmState = ESP32S3_STATE_OFF;
+        break;
+      }      
+    }
+  }
+  
+  Serial.println("esp32s3_Web_FSM(): Please restart the device..!");
+  return ESP32S3_RESULT_OK;
+}
+
+
+
+
+
+
+
+
+ 
