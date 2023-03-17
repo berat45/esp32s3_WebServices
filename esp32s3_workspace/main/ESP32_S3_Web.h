@@ -18,8 +18,6 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <WiFiAP.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncTCP.h>
 
 /***********************************************/
 /***************** DEFINES *********************/

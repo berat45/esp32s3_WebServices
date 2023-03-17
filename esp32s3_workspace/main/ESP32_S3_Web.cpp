@@ -211,7 +211,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_ReadClientParamsFromFlashAndSet(esp32s3Web_Singl
   return ESP32S3_RESULT_OK;
 }
 
-/* Clear all flash regions*/
+/* Clear all flash regions */
 ESP32S3_RESULT_ENUM esp32s3_Web_FlushClientParamsOnFlash(esp32s3Web_Singleton* pWebObject)
 {
   String ssidNullStr     = "";
@@ -378,7 +378,7 @@ ESP32S3_RESULT_ENUM esp32s3_Web_AccessPointService()
       }
       delay(ESP32S3_WEBSERVICE_WIRELESS_AP_DELAY);
     }
-  Serial.println("Connection established..!");
+    Serial.println("Connection established..!");
 
     /* Provide AP services for the remote client */
     while(wifiRemoteClient.connected())
